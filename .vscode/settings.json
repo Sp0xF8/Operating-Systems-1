@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.aiml": "xml",
+        "xstring": "c",
+        "xutility": "c"
+    }
+}

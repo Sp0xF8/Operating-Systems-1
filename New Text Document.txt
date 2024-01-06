@@ -1,0 +1,70 @@
+int copy_file(struct CopyData* data){
+
+	
+	
+
+	fseek(data->file, 0, SEEK_END); // moves "cursor" from the beginning of the file to the end
+	long long file_size = ftell(data->file); // gets the position of the cursor after moving through the file in bytes
+	fseek(data->file, 0, SEEK_SET); // resets the cursor so the file can be read from the beginning
+
+
+	//sanity check to ensure a file too big for our ram isnt moved
+	if(file_size < 2147483648){ // file size is smaller than 2gb
+
+		char* byte_buffer = malloc(file_size);
+
+		if (!byte_buffer){
+			perror("Couldnt allocate memory");
+			fclose(data->file);
+			closedir(data->destination_directory);
+			return 1;
+		}
+
+		fread(byte_buffer, 1, file_size, data->file);
+
+		write_to_file(byte_buffer, data, 0);
+
+	} else {
+
+		long long reading_iteration_start = 1;
+		long long amount_to_read = file_size;
+		long long reading_iteration_end = 0;
+
+		
+
+		while (amount_to_read > 0){
+
+			char* byte_buffer;
+
+			if (amount_to_read > 1073741824){
+				reading_iteration_end = reading_iteration_start + 1073741824;
+				byte_buffer = malloc(1073741824);
+
+			} else {
+				reading_iteration_end = file_size;
+				byte_buffer = malloc(amount_to_read);
+
+			}
+
+
+			if (!byte_buffer){
+				perror("Couldnt allocate memory");
+				fclose(data->file);
+				closedir(data->destination_directory);
+				return 1;
+			}
+
+			long long bytes_read = fread(byte_buffer, reading_iteration_start, reading_iteration_end, data->file);
+
+			write_to_file(byte_buffer, data, 1); // writing to file in ammend mode
+
+			amount_to_read -= reading_iteration_end - reading_iteration_start;
+			reading_iteration_start += reading_iteration_end - reading_iteration_start;
+			free(byte_buffer);
+		}
+
+
+
+		
+	}
+}
